@@ -1,366 +1,214 @@
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const symbols = [
+  "🀇",
+  "🀈",
+  "🀉",
+  "🀊",
+  "🀋",
+  "🀌",
+  "🀍",
+  "🀎",
+  "🀏",
+  "🀐",
+  "🀑",
+  "🀒",
+  "🀓",
+  "🀔",
+  "🀕",
+  "🀖",
+  "🀀",
+  "🀁",
+  "🀂",
+  "🀃",
+  "🀄",
+  "🀅",
+  "🀆"
+];
 
-let W, H;
+const reel1 = document.getElementById("reel1");
+const reel2 = document.getElementById("reel2");
+const reel3 = document.getElementById("reel3");
 
-function resize() {
-  W = canvas.width = innerWidth * devicePixelRatio;
-  H = canvas.height = innerHeight * devicePixelRatio;
+const spinBtn = document.getElementById("spinBtn");
+const autoBtn = document.getElementById("autoBtn");
 
-  canvas.style.width = innerWidth + "px";
-  canvas.style.height = innerHeight + "px";
+const scoreText = document.getElementById("score");
+const comboText = document.getElementById("combo");
+const spinsText = document.getElementById("spins");
+const bestText = document.getElementById("best");
+const result = document.getElementById("result");
 
-  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-  W = innerWidth;
-  H = innerHeight;
+let score = 1000;
+let combo = 0;
+let spins = 0;
+let best = 0;
+
+let spinning = false;
+let autoSpin = false;
+let autoTimer = null;
+
+const winMessages = [
+  "TRIPLE MAHJONG!",
+  "PERFECT MATCH!",
+  "JACKPOT!",
+  "AMAZING!",
+  "MEGA COMBO!"
+];
+
+function randomSymbol() {
+  return symbols[Math.floor(Math.random() * symbols.length)];
 }
 
-resize();
-addEventListener("resize", resize);
-
-// =============================
-// TARGET TOUCH / MOUSE
-// =============================
-
-let target = {
-  x: innerWidth / 2,
-  y: innerHeight / 2
-};
-
-let mouseDown = false;
-
-function moveTarget(x, y) {
-  target.x = x;
-  target.y = y;
+function updateStats() {
+  scoreText.textContent = score;
+  comboText.textContent = combo;
+  spinsText.textContent = spins;
+  bestText.textContent = best;
 }
 
-canvas.addEventListener("pointerdown", e => {
-  mouseDown = true;
-  moveTarget(e.clientX, e.clientY);
-});
+function spinReel(element, finalSymbol, delay) {
 
-canvas.addEventListener("pointermove", e => {
-  if (mouseDown) {
-    moveTarget(e.clientX, e.clientY);
-  }
-});
+  return new Promise(resolve => {
 
-canvas.addEventListener("pointerup", () => {
-  mouseDown = false;
-});
+    setTimeout(() => {
 
-canvas.addEventListener("pointercancel", () => {
-  mouseDown = false;
-});
+      element.classList.add("spinning");
 
-// =============================
-// KELABANG
-// =============================
+      let counter = 0;
 
-const segments = [];
+      const animation = setInterval(() => {
 
-const COUNT = 22;
+        element.textContent = randomSymbol();
 
-for (let i = 0; i < COUNT; i++) {
-  segments.push({
-    x: innerWidth / 2 - i * 13,
-    y: innerHeight / 2,
-    angle: 0
+        counter++;
+
+        if (counter >= 12) {
+
+          clearInterval(animation);
+
+          element.textContent = finalSymbol;
+
+          setTimeout(() => {
+            element.classList.remove("spinning");
+            resolve();
+          }, 150);
+
+        }
+
+      }, 80);
+
+    }, delay);
+
   });
 }
 
-let head = {
-  x: innerWidth / 2,
-  y: innerHeight / 2,
-  angle: 0
-};
+async function spin() {
 
-// =============================
-// DRAW LEG
-// =============================
+  if (spinning) return;
 
-function drawLeg(x, y, angle, side, index) {
+  spinning = true;
 
-  const wave =
-    Math.sin(performance.now() * 0.008 + index * 0.8) * 0.25;
+  spinBtn.disabled = true;
 
-  const a = angle + side * (Math.PI / 2.7 + wave);
+  result.classList.remove("win");
+  result.textContent = "SPINNING...";
 
-  const len1 = 17;
-  const len2 = 13;
+  score -= 10;
 
-  const x1 = x + Math.cos(a) * len1;
-  const y1 = y + Math.sin(a) * len1;
-
-  const x2 =
-    x1 +
-    Math.cos(a + side * 0.45) * len2;
-
-  const y2 =
-    y1 +
-    Math.sin(a + side * 0.45) * len2;
-
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.lineTo(x1, y1);
-  ctx.lineTo(x2, y2);
-
-  ctx.strokeStyle = "#777";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // ujung kaki
-  ctx.beginPath();
-  ctx.arc(x2, y2, 2, 0, Math.PI * 2);
-  ctx.fillStyle = "#aaa";
-  ctx.fill();
-}
-
-// =============================
-// DRAW BODY
-// =============================
-
-function drawBody(seg, index) {
-
-  const radius =
-    index === 0
-      ? 17
-      : Math.max(7, 13 - index * 0.2);
-
-  // kaki
-  if (index > 0) {
-    drawLeg(
-      seg.x,
-      seg.y,
-      seg.angle,
-      -1,
-      index
-    );
-
-    drawLeg(
-      seg.x,
-      seg.y,
-      seg.angle,
-      1,
-      index
-    );
+  if (score < 0) {
+    score = 0;
   }
 
-  // badan
-  ctx.beginPath();
-  ctx.ellipse(
-    seg.x,
-    seg.y,
-    radius,
-    radius * 0.7,
-    seg.angle,
-    0,
-    Math.PI * 2
-  );
+  spins++;
 
-  ctx.fillStyle = "#151515";
-  ctx.fill();
+  updateStats();
 
-  ctx.strokeStyle = "#777";
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
+  const a = randomSymbol();
+  const b = randomSymbol();
+  const c = randomSymbol();
 
-  // garis tulang badan
-  if (index > 0) {
-    ctx.beginPath();
-    ctx.moveTo(
-      seg.x - Math.cos(seg.angle) * radius,
-      seg.y - Math.sin(seg.angle) * radius
-    );
+  await Promise.all([
+    spinReel(reel1, a, 0),
+    spinReel(reel2, b, 250),
+    spinReel(reel3, c, 500)
+  ]);
 
-    ctx.lineTo(
-      seg.x + Math.cos(seg.angle) * radius,
-      seg.y + Math.sin(seg.angle) * radius
-    );
+  checkResult(a, b, c);
 
-    ctx.strokeStyle = "#555";
-    ctx.stroke();
+  spinning = false;
+
+  spinBtn.disabled = false;
+
+  if (autoSpin) {
+
+    autoTimer = setTimeout(() => {
+      spin();
+    }, 1300);
+
   }
 }
 
-// =============================
-// TENGKORAK
-// =============================
+function checkResult(a, b, c) {
 
-function drawSkull(x, y, angle) {
+  if (a === b && b === c) {
 
-  ctx.save();
+    combo++;
 
-  ctx.translate(x, y);
-  ctx.rotate(angle);
+    const reward = 250 + (combo * 100);
 
-  // kepala
-  ctx.beginPath();
-  ctx.arc(0, 0, 22, 0, Math.PI * 2);
+    score += reward;
 
-  ctx.fillStyle = "#d0d0c8";
-  ctx.fill();
-
-  ctx.strokeStyle = "#777";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // rahang
-  ctx.beginPath();
-  ctx.moveTo(-13, 12);
-  ctx.lineTo(13, 12);
-  ctx.lineTo(9, 22);
-  ctx.lineTo(-9, 22);
-  ctx.closePath();
-
-  ctx.fillStyle = "#aaa";
-  ctx.fill();
-
-  ctx.stroke();
-
-  // mata
-  ctx.fillStyle = "#050505";
-
-  ctx.beginPath();
-  ctx.arc(-8, -5, 5, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(8, -5, 5, 0, Math.PI * 2);
-  ctx.fill();
-
-  // hidung
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(-3, 6);
-  ctx.lineTo(3, 6);
-  ctx.closePath();
-  ctx.fill();
-
-  // gigi
-  for (let i = -3; i <= 3; i++) {
-    ctx.beginPath();
-    ctx.rect(i * 4 - 1.5, 13, 3, 6);
-    ctx.fillStyle = "#ddd";
-    ctx.fill();
-  }
-
-  // antena
-  ctx.strokeStyle = "#aaa";
-  ctx.lineWidth = 2;
-
-  ctx.beginPath();
-  ctx.moveTo(-12, -14);
-  ctx.quadraticCurveTo(-25, -28, -31, -18);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(12, -14);
-  ctx.quadraticCurveTo(25, -28, 31, -18);
-  ctx.stroke();
-
-  ctx.restore();
-}
-
-// =============================
-// UPDATE
-// =============================
-
-function update() {
-
-  // kepala mengejar target
-  const dx = target.x - head.x;
-  const dy = target.y - head.y;
-
-  const distance = Math.hypot(dx, dy);
-
-  if (distance > 2) {
-
-    const speed = Math.min(5, distance * 0.035);
-
-    head.x += dx / distance * speed;
-    head.y += dy / distance * speed;
-
-    head.angle = Math.atan2(dy, dx);
-  }
-
-  // kepala menjadi segment pertama
-  segments[0].x = head.x;
-  segments[0].y = head.y;
-  segments[0].angle = head.angle;
-
-  // badan mengikuti bagian sebelumnya
-  for (let i = 1; i < segments.length; i++) {
-
-    const current = segments[i];
-    const previous = segments[i - 1];
-
-    const dx = previous.x - current.x;
-    const dy = previous.y - current.y;
-
-    const dist = Math.hypot(dx, dy);
-
-    const spacing = 14;
-
-    if (dist > spacing) {
-
-      const pull = (dist - spacing) * 0.65;
-
-      current.x += dx / dist * pull;
-      current.y += dy / dist * pull;
+    if (score > best) {
+      best = score;
     }
 
-    current.angle = Math.atan2(dy, dx);
-  }
-}
+    result.textContent =
+      `${winMessages[Math.floor(Math.random() * winMessages.length)]} +${reward}`;
 
-// =============================
-// DRAW
-// =============================
+    result.classList.add("win");
 
-function draw() {
-
-  ctx.clearRect(0, 0, innerWidth, innerHeight);
-
-  // bayangan
-  ctx.globalAlpha = 0.25;
-
-  for (let i = 0; i < segments.length; i++) {
-
-    ctx.beginPath();
-    ctx.ellipse(
-      segments[i].x + 4,
-      segments[i].y + 6,
-      13,
-      7,
-      segments[i].angle,
-      0,
-      Math.PI * 2
-    );
-
-    ctx.fillStyle = "#000";
-    ctx.fill();
   }
 
-  ctx.globalAlpha = 1;
+  else if (a === b || b === c || a === c) {
 
-  // badan dari belakang ke depan
-  for (let i = segments.length - 1; i >= 1; i--) {
-    drawBody(segments[i], i);
+    combo++;
+
+    const reward = 50 + (combo * 25);
+
+    score += reward;
+
+    result.textContent =
+      `PAIR MATCH +${reward}`;
+
+    result.classList.add("win");
+
   }
 
-  drawSkull(
-    head.x,
-    head.y,
-    head.angle
-  );
+  else {
 
-  requestAnimationFrame(loop);
+    combo = 0;
+
+    result.textContent = "NO MATCH";
+
+  }
+
+  updateStats();
 }
 
-function loop() {
-  update();
-  draw();
-}
+autoBtn.addEventListener("click", () => {
 
-loop();
+  autoSpin = !autoSpin;
+
+  autoBtn.classList.toggle("active", autoSpin);
+
+  if (autoSpin && !spinning) {
+    spin();
+  }
+
+  if (!autoSpin) {
+    clearTimeout(autoTimer);
+  }
+});
+
+spinBtn.addEventListener("click", spin);
+
+updateStats();
