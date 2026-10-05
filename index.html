@@ -3,13 +3,86 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Skull Centipede</title>
+  <title>Mahjong Spin</title>
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-  <canvas id="canvas"></canvas>
-  <div class="info">SENTUH LAYAR UNTUK MENGGERAKKAN KELABANG ☠</div>
+
+  <div class="bg"></div>
+
+  <main class="game">
+
+    <div class="top">
+      <div>
+        <p class="tag">ARCADE EDITION</p>
+        <h1>🀄 MAHJONG <span>SPIN</span></h1>
+      </div>
+
+      <div class="score-box">
+        <small>SCORE</small>
+        <strong id="score">1000</strong>
+      </div>
+    </div>
+
+    <div class="machine">
+
+      <div class="lights">
+        <i></i><i></i><i></i><i></i><i></i>
+        <i></i><i></i><i></i><i></i><i></i>
+      </div>
+
+      <div class="reels">
+
+        <div class="reel">
+          <div class="symbol" id="reel1">🀄</div>
+        </div>
+
+        <div class="reel">
+          <div class="symbol" id="reel2">🀅</div>
+        </div>
+
+        <div class="reel">
+          <div class="symbol" id="reel3">🀆</div>
+        </div>
+
+      </div>
+
+      <div class="result" id="result">
+        SIAP SPIN
+      </div>
+
+      <button id="spinBtn">
+        <span>SPIN</span>
+      </button>
+
+      <button id="autoBtn" class="auto">
+        AUTO SPIN
+      </button>
+
+      <div class="stats">
+        <div>
+          <small>COMBO</small>
+          <b id="combo">0</b>
+        </div>
+
+        <div>
+          <small>SPIN</small>
+          <b id="spins">0</b>
+        </div>
+
+        <div>
+          <small>BEST</small>
+          <b id="best">0</b>
+        </div>
+      </div>
+
+    </div>
+
+    <p class="notice">
+      GAME DEMO • SCORE VIRTUAL • NO MONEY
+    </p>
+
+  </main>
 
   <script src="script.js"></script>
 </body>
