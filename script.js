@@ -1,27 +1,8 @@
 const symbols = [
-  "🀇",
-  "🀈",
-  "🀉",
-  "🀊",
-  "🀋",
-  "🀌",
-  "🀍",
-  "🀎",
-  "🀏",
-  "🀐",
-  "🀑",
-  "🀒",
-  "🀓",
-  "🀔",
-  "🀕",
-  "🀖",
-  "🀀",
-  "🀁",
-  "🀂",
-  "🀃",
-  "🀄",
-  "🀅",
-  "🀆"
+  "🀇","🀈","🀉","🀊","🀋","🀌",
+  "🀍","🀎","🀏","🀐","🀑","🀒",
+  "🀓","🀔","🀕","🀖","🀀","🀁",
+  "🀂","🀃","🀄","🀅","🀆"
 ];
 
 const reel1 = document.getElementById("reel1");
@@ -45,14 +26,6 @@ let best = 0;
 let spinning = false;
 let autoSpin = false;
 let autoTimer = null;
-
-const winMessages = [
-  "TRIPLE MAHJONG!",
-  "PERFECT MATCH!",
-  "JACKPOT!",
-  "AMAZING!",
-  "MEGA COMBO!"
-];
 
 function randomSymbol() {
   return symbols[Math.floor(Math.random() * symbols.length)];
@@ -81,7 +54,7 @@ function spinReel(element, finalSymbol, delay) {
 
         counter++;
 
-        if (counter >= 12) {
+        if (counter >= 15) {
 
           clearInterval(animation);
 
@@ -91,15 +64,32 @@ function spinReel(element, finalSymbol, delay) {
             element.classList.remove("spinning");
             resolve();
           }, 150);
-
         }
 
       }, 80);
 
     }, delay);
-
   });
 }
+
+/* =================================
+   100% TRIPLE
+   ================================= */
+
+function generateResult() {
+
+  const symbol = randomSymbol();
+
+  return [
+    symbol,
+    symbol,
+    symbol
+  ];
+}
+
+/* =================================
+   SPIN
+   ================================= */
 
 async function spin() {
 
@@ -122,9 +112,8 @@ async function spin() {
 
   updateStats();
 
-  const a = randomSymbol();
-  const b = randomSymbol();
-  const c = randomSymbol();
+  // 100% HASIL SAMA
+  const [a, b, c] = generateResult();
 
   await Promise.all([
     spinReel(reel1, a, 0),
@@ -132,11 +121,32 @@ async function spin() {
     spinReel(reel3, c, 500)
   ]);
 
-  checkResult(a, b, c);
+  /* ==============================
+     SELALU MENANG
+     ============================== */
+
+  combo++;
+
+  const reward = 250 + (combo * 100);
+
+  score += reward;
+
+  if (score > best) {
+    best = score;
+  }
+
+  result.textContent =
+    `🀄 TRIPLE MAHJONG! +${reward}`;
+
+  result.classList.add("win");
+
+  updateStats();
 
   spinning = false;
 
   spinBtn.disabled = false;
+
+  /* AUTO SPIN */
 
   if (autoSpin) {
 
@@ -147,52 +157,9 @@ async function spin() {
   }
 }
 
-function checkResult(a, b, c) {
-
-  if (a === b && b === c) {
-
-    combo++;
-
-    const reward = 250 + (combo * 100);
-
-    score += reward;
-
-    if (score > best) {
-      best = score;
-    }
-
-    result.textContent =
-      `${winMessages[Math.floor(Math.random() * winMessages.length)]} +${reward}`;
-
-    result.classList.add("win");
-
-  }
-
-  else if (a === b || b === c || a === c) {
-
-    combo++;
-
-    const reward = 50 + (combo * 25);
-
-    score += reward;
-
-    result.textContent =
-      `PAIR MATCH +${reward}`;
-
-    result.classList.add("win");
-
-  }
-
-  else {
-
-    combo = 0;
-
-    result.textContent = "NO MATCH";
-
-  }
-
-  updateStats();
-}
+/* =================================
+   AUTO SPIN
+   ================================= */
 
 autoBtn.addEventListener("click", () => {
 
@@ -207,8 +174,17 @@ autoBtn.addEventListener("click", () => {
   if (!autoSpin) {
     clearTimeout(autoTimer);
   }
+
 });
 
+/* =================================
+   SPIN BUTTON
+   ================================= */
+
 spinBtn.addEventListener("click", spin);
+
+/* =================================
+   START
+   ================================= */
 
 updateStats();
